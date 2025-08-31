@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mi Portafolio</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- HEADER / NAVBAR -->
+<header>
+  <h1>Marcelo Ramirez</h1>
+  <button id="menu-toggle">☰</button>
+  <button id="dark-mode-toggle">🌙</button>
+  <nav id="navbar">
+    <a href="#sobre-mi">Sobre mí</a>
+    <a href="#proyectos">Proyectos</a>
+    <a href="#contacto">Contacto</a>
+  </nav>
+</header>
+
+
+
+
+  <!-- HERO -->
+  <section id="hero">
+    <h2>Desarrollador Web en Aprendizaje</h2>
+    <p>Construyendo experiencias digitales increíbles.</p>
+    <a href="#proyectos" class="btn">Ver mis proyectos</a>
+  </section>
+
+  <!-- SOBRE MÍ -->
+  <section id="sobre-mi">
+    <h2>Sobre mí</h2>
+    <p>Soy estudiante de desarrollo web. Me apasiona crear proyectos prácticos y mejorar mis habilidades día a día.</p>
+    <div class="habilidades">
+      <span>HTML</span>
+      <span>CSS</span>
+      <span>JavaScript</span>
+    </div>
+  </section>
+
+  <!-- PROYECTOS -->
+  <div class="proyectos-slider">
+  <div class="proyecto">Proyecto 1</div>
+  <div class="proyecto">Proyecto 2</div>
+  <div class="proyecto">Proyecto 3</div>
+</div>
+<button id="prev">◀</button>
+<button id="next">▶</button>
+
+
+
+  <!-- CONTACTO -->
+  <section id="contacto">
+    <h2>Contacto</h2>
+    <form id="contactForm">
+      <input type="text" placeholder="Tu nombre" required>
+      <input type="email" placeholder="Tu correo" required>
+      <textarea placeholder="Tu mensaje" required></textarea>
+      <button type="submit">Enviar</button>
+    </form>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <p>© 2025 Marcelo Ramirez</p>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
