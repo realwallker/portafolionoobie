@@ -1,72 +1,106 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mi Portafolio</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <!-- HEADER / NAVBAR -->
-<header>
-  <h1>Marcelo Ramirez</h1>
-  <button id="menu-toggle">☰</button>
-  <button id="dark-mode-toggle">🌙</button>
-  <nav id="navbar">
-    <a href="#sobre-mi">Sobre mí</a>
-    <a href="#proyectos">Proyectos</a>
-    <a href="#contacto">Contacto</a>
-  </nav>
-</header>
+<!doctype html>
+<html lang="es" dir="ltr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Cosmic Vapes – Juego de Premios</title>
+    <meta name="description" content="Gira y gana premios de Cosmic Vapes. 1 giro cada 24h. Muestra tu código único." />
+    <link rel="icon" href="favicon.png" />
+    <link rel="preload" href="assets/logo.png" as="image" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="stars" aria-hidden="true"></div>
 
+    <header class="site-header" role="banner">
+      <div class="brand">
+        <img class="brand__logo" src="assets/logo.png" alt="Cosmic Vapes" decoding="async" />
+        <div class="brand__copy">
+          <h1 class="brand__title">Cosmic Vapes</h1>
+          <p class="brand__tag">Juego de premios • 1 giro cada 24h</p>
+        </div>
+      </div>
+      <nav class="site-nav" aria-label="Enlaces">
+        <a class="btn btn--ghost" href="instagram://user?username=sb.cosmicvapes">Abrir en Instagram</a>
+        <a class="btn btn--ghost" href="https://instagram.com/sb.cosmicvapes" target="_blank" rel="noopener">@sb.cosmicvapes</a>
+      </nav>
+    </header>
 
+    <main class="container" id="main" role="main">
+      <!-- GATE -->
+      <section class="gate" aria-labelledby="gate-title">
+        <h2 id="gate-title" class="sr-only">Confirmación de seguimiento</h2>
+        <form id="gateForm" class="gate__form" aria-describedby="gate-help">
+          <label class="field">
+            <span class="field__label">@usuario de Instagram</span>
+            <input id="igUser" name="igUser" class="input" type="text" inputmode="latin-name"
+                   autocomplete="username" placeholder="@tuusuario" required aria-required="true" />
+          </label>
+          <div class="gate__actions">
+            <label class="checkbox">
+              <input id="follows" name="follows" type="checkbox" required aria-required="true" />
+              <span>Confirmo que sigo la cuenta <strong>@sb.cosmicvapes</strong></span>
+            </label>
+            <a class="mini-link" href="instagram://user?username=sb.cosmicvapes">Seguir ahora</a>
+          </div>
+          <p id="gate-help" class="muted">No guardamos datos personales. Todo ocurre en esta página.</p>
+          <button id="enterBtn" class="btn" type="submit">Entrar</button>
+        </form>
+      </section>
 
+      <!-- SLOT (visualización tipo tragamonedas) -->
+      <section id="game" class="game" hidden aria-live="polite" aria-labelledby="slot-title">
+        <h2 id="slot-title" class="section-title">Gira para descubrir tu premio</h2>
 
-  <!-- HERO -->
-  <section id="hero">
-    <h2>Desarrollador Web en Aprendizaje</h2>
-    <p>Construyendo experiencias digitales increíbles.</p>
-    <a href="#proyectos" class="btn">Ver mis proyectos</a>
-  </section>
+        <div class="slot" role="region" aria-label="Tragamonedas de premios">
+          <div class="slot-window">
+            <div id="slotReel" class="slot-reel" aria-hidden="false"></div>
+            <div class="slot-center-line" aria-hidden="true"></div>
+            <img class="slot-logo" src="assets/logo.png" alt="" aria-hidden="true" />
+          </div>
+        </div>
 
-  <!-- SOBRE MÍ -->
-  <section id="sobre-mi">
-    <h2>Sobre mí</h2>
-    <p>Soy estudiante de desarrollo web. Me apasiona crear proyectos prácticos y mejorar mis habilidades día a día.</p>
-    <div class="habilidades">
-      <span>HTML</span>
-      <span>CSS</span>
-      <span>JavaScript</span>
+        <div class="controls">
+          <button id="spinBtn" class="btn btn--primary" aria-controls="resultCard">GIRAR</button>
+          <p id="limitMsg" class="muted" role="status" aria-live="polite"></p>
+        </div>
+
+        <!-- Respaldo inline (además del modal) -->
+        <section id="resultCard" class="result" hidden aria-labelledby="result-title">
+          <h3 id="result-title" class="result__title">¡Resultado!</h3>
+          <p class="result__prize" id="prizeText"></p>
+          <div class="code">
+            <code id="codeText" class="code__value" aria-label="Código único"></code>
+            <button id="copyBtn" class="btn btn--ghost btn--sm" aria-label="Copiar código">Copiar</button>
+          </div>
+          <p class="muted" id="expiryHint"></p>
+        </section>
+      </section>
+    </main>
+
+    <footer class="site-footer" role="contentinfo">
+      <p>🚚 Free delivery en <strong>Cumbayá – USFQ, Paseo San Francisco</strong></p>
+      <p class="muted xs">Promociones sujetas a disponibilidad. 1 giro cada 24h por usuario.</p>
+    </footer>
+
+    <!-- CONFETTI + MODAL -->
+    <canvas id="confetti" class="confetti" aria-hidden="true"></canvas>
+    <div id="prizeModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" hidden>
+      <div class="modal__card">
+        <button class="modal__close" id="closeModal" aria-label="Cerrar">✕</button>
+        <img src="assets/logo.png" class="modal__logo" alt="" aria-hidden="true" />
+        <h3 id="modalTitle" class="modal__title">¡Ganaste!</h3>
+        <p id="modalPrize" class="modal__prize"></p>
+        <div class="code modal__code">
+          <code id="modalCode" class="code__value"></code>
+          <button id="modalCopy" class="btn btn--ghost btn--sm">Copiar</button>
+        </div>
+        <p class="muted">Toma una <strong>captura</strong> de esta pantalla para canjearlo.</p>
+        <p class="muted" id="modalExpiry"></p>
+        <button id="modalOk" class="btn btn--primary">Listo</button>
+      </div>
     </div>
-  </section>
 
-  <!-- PROYECTOS -->
-  <div class="proyectos-slider">
-  <div class="proyecto">Proyecto 1</div>
-  <div class="proyecto">Proyecto 2</div>
-  <div class="proyecto">Proyecto 3</div>
-</div>
-<button id="prev">◀</button>
-<button id="next">▶</button>
-
-
-
-  <!-- CONTACTO -->
-  <section id="contacto">
-    <h2>Contacto</h2>
-    <form id="contactForm">
-      <input type="text" placeholder="Tu nombre" required>
-      <input type="email" placeholder="Tu correo" required>
-      <textarea placeholder="Tu mensaje" required></textarea>
-      <button type="submit">Enviar</button>
-    </form>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>© 2025 Marcelo Ramirez</p>
-  </footer>
-
-  <script src="script.js"></script>
-</body>
+    <script src="app.js" defer></script>
+  </body>
 </html>
