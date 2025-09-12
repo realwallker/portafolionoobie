@@ -2,7 +2,7 @@
 <html lang="es" dir="ltr">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Cosmic Vapes – Juego de Premios</title>
     <meta name="description" content="Gira y gana premios de Cosmic Vapes. 1 giro cada 24h. Muestra tu código único." />
     <link rel="icon" href="favicon.png" />
@@ -17,38 +17,29 @@
         <img class="brand__logo" src="assets/logo.png" alt="Cosmic Vapes" decoding="async" />
         <div class="brand__copy">
           <h1 class="brand__title">Cosmic Vapes</h1>
-          <p class="brand__tag">Juego de premios • 1 giro cada 24h</p>
+          <p class="brand__tag">Premios • 1 giro / 24h</p>
         </div>
       </div>
       <nav class="site-nav" aria-label="Enlaces">
-        <a class="btn btn--ghost" href="instagram://user?username=sb.cosmicvapes">Abrir en Instagram</a>
-        <a class="btn btn--ghost" href="https://instagram.com/sb.cosmicvapes" target="_blank" rel="noopener">@sb.cosmicvapes</a>
+        <a class="btn btn--ghost hide-sm" href="https://instagram.com/sb.cosmicvapes" target="_blank" rel="noopener">@sb.cosmicvapes</a>
       </nav>
     </header>
 
     <main class="container" id="main" role="main">
-      <!-- GATE -->
+      <!-- GATE simplificado (sin @usuario). CTA grande para seguir y activar -->
       <section class="gate" aria-labelledby="gate-title">
-        <h2 id="gate-title" class="sr-only">Confirmación de seguimiento</h2>
-        <form id="gateForm" class="gate__form" aria-describedby="gate-help">
-          <label class="field">
-            <span class="field__label">@usuario de Instagram</span>
-            <input id="igUser" name="igUser" class="input" type="text" inputmode="latin-name"
-                   autocomplete="username" placeholder="@tuusuario" required aria-required="true" />
-          </label>
-          <div class="gate__actions">
-            <label class="checkbox">
-              <input id="follows" name="follows" type="checkbox" required aria-required="true" />
-              <span>Confirmo que sigo la cuenta <strong>@sb.cosmicvapes</strong></span>
-            </label>
-            <a class="mini-link" href="instagram://user?username=sb.cosmicvapes">Seguir ahora</a>
-          </div>
-          <p id="gate-help" class="muted">No guardamos datos personales. Todo ocurre en esta página.</p>
-          <button id="enterBtn" class="btn" type="submit">Entrar</button>
-        </form>
+        <h2 id="gate-title" class="sr-only">Seguir en Instagram para activar</h2>
+        <div class="gate__card">
+          <p class="gate__lead">Para jugar, primero síguenos en Instagram.</p>
+          <button id="followBtn" class="btn btn--primary btn--xl" aria-describedby="gate-help">
+            Seguir en Instagram y activar giro
+          </button>
+          <p id="gate-help" class="muted sm">Al tocar, se abrirá Instagram. Al volver aquí, el giro quedará activado.</p>
+          <a class="mini-link" href="https://instagram.com/sb.cosmicvapes" target="_blank" rel="noopener">Ver perfil en el navegador</a>
+        </div>
       </section>
 
-      <!-- SLOT (visualización tipo tragamonedas) -->
+      <!-- SLOT (visualización tipo tragamonedas vertical) -->
       <section id="game" class="game" hidden aria-live="polite" aria-labelledby="slot-title">
         <h2 id="slot-title" class="section-title">Gira para descubrir tu premio</h2>
 
@@ -61,7 +52,7 @@
         </div>
 
         <div class="controls">
-          <button id="spinBtn" class="btn btn--primary" aria-controls="resultCard">GIRAR</button>
+          <button id="spinBtn" class="btn btn--primary btn--xl" aria-controls="resultCard">GIRAR</button>
           <p id="limitMsg" class="muted" role="status" aria-live="polite"></p>
         </div>
 
@@ -81,6 +72,7 @@
     <footer class="site-footer" role="contentinfo">
       <p>🚚 Free delivery en <strong>Cumbayá – USFQ, Paseo San Francisco</strong></p>
       <p class="muted xs">Promociones sujetas a disponibilidad. 1 giro cada 24h por usuario.</p>
+      <div class="safearea"></div>
     </footer>
 
     <!-- CONFETTI + MODAL -->
@@ -89,13 +81,12 @@
       <div class="modal__card">
         <button class="modal__close" id="closeModal" aria-label="Cerrar">✕</button>
         <img src="assets/logo.png" class="modal__logo" alt="" aria-hidden="true" />
-        <h3 id="modalTitle" class="modal__title">¡Ganaste!</h3>
-        <p id="modalPrize" class="modal__prize"></p>
+        <h3 id="modalTitle" class="modal__title">¡GANASTE!</h3>
+        <p class="modal__prize" id="modalPrize"></p>
         <div class="code modal__code">
           <code id="modalCode" class="code__value"></code>
           <button id="modalCopy" class="btn btn--ghost btn--sm">Copiar</button>
         </div>
-        <p class="muted">Toma una <strong>captura</strong> de esta pantalla para canjearlo.</p>
         <p class="muted" id="modalExpiry"></p>
         <button id="modalOk" class="btn btn--primary">Listo</button>
       </div>

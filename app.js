@@ -1,8 +1,8 @@
-/* Cosmic Vapes – tragamonedas vertical con estética mejorada y selección segura */
+/* Gate por botón (deep-link) + mobile UX + premios bloqueados excluidos */
 (() => {
   'use strict';
 
-  // Premios: los de weight 0 son visibles pero NO sorteables
+  // Premios: los de weight 0 SON VISIBLES pero NO sorteables
   const prizes = [
     {label:'Siga participando',           key:'TRY',  weight:40, color:'#1f2937'},
     {label:'10% en tu siguiente compra',  key:'P10',  weight:22, color:'#22d3ee'},
@@ -13,7 +13,8 @@
   ];
 
   // UI
-  const gateForm  = document.getElementById('gateForm');
+  const followBtn = document.getElementById('followBtn');
+  const gate      = document.querySelector('.gate');
   const game      = document.getElementById('game');
   const spinBtn   = document.getElementById('spinBtn');
   const limitMsg  = document.getElementById('limitMsg');
@@ -37,8 +38,8 @@
   // Confetti
   const confettiCanvas = document.getElementById('confetti');
 
-  const LS_LAST_SPIN = 'cv_lastSpin';
-  const LS_USER      = 'cv_user';
+  const LS_LAST_SPIN   = 'cv_lastSpin';
+  const LS_FOLLOW_FLAG = 'cv_followIntent';
 
   // Utils
   const fmtDate  = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
@@ -46,33 +47,43 @@
   const rand     = (n) => Math.floor(Math.random()*n);
   const easeOutC = (t)=>1-Math.pow(1-t,3);
 
-  // Selección con pesos (excluye explícitamente weight 0)
-  const selectable = prizes.filter(p => p.weight > 0);
-  function pickPrize(){
-    const pool = selectable.flatMap(i => Array(i.weight).fill(i));
-    return pool[rand(pool.length)];
-  }
-
-  // Gate
-  gateForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const user = document.getElementById('igUser').value.trim();
-    const ok   = document.getElementById('follows').checked;
-    if(!user || !ok) return;
-    localStorage.setItem(LS_USER, user);
-    document.querySelector('.gate').hidden = true;
-    game.hidden = false;
-    updateSpinLimit();
+  // Deep-link a IG + fallback web y flag
+  followBtn?.addEventListener('click', () => {
+    try {
+      localStorage.setItem(LS_FOLLOW_FLAG, String(Date.now()));
+    } catch {}
+    // Intento abrir app
+    window.location.href = 'instagram://user?username=sb.cosmicvapes';
+    // Fallback a web
+    setTimeout(() => {
+      window.open('https://instagram.com/sb.cosmicvapes', '_blank', 'noopener');
+    }, 600);
   });
 
+  // Al volver/reenfocar, si hubo intento de follow => activar juego
+  function maybeUnlockAfterFollow(){
+    const flag = localStorage.getItem(LS_FOLLOW_FLAG);
+    if (!flag) return;
+    gate.hidden = true;
+    game.hidden = false;
+    updateSpinLimit();
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) maybeUnlockAfterFollow();
+  });
+  window.addEventListener('pageshow', maybeUnlockAfterFollow);
+  // Por si ya venía activado
+  maybeUnlockAfterFollow();
+
+  // Límite 24h
   function updateSpinLimit(){
     const last = Number(localStorage.getItem(LS_LAST_SPIN) || 0);
     const diff = Date.now() - last;
     const day  = 24*60*60*1000;
     if (diff < day){
-      spinBtn.disabled = true;
       const h = Math.floor((day-diff)/3600000);
       const m = Math.floor(((day-diff)%3600000)/60000);
+      spinBtn.disabled = true;
       limitMsg.textContent = `Vuelve en ${h}h ${m}m.`;
     } else {
       spinBtn.disabled = false;
@@ -80,9 +91,9 @@
     }
   }
 
-  // Construir el carrete con N repeticiones y gradientes por color
-  const ITEM_H = 148;
-  const REPS   = 8;  // scroll más largo
+  // Carrete
+  const ITEM_H = 128;
+  const REPS   = 8;
   function buildReel(){
     const items = [];
     for (let r=0; r<REPS; r++){
@@ -95,17 +106,16 @@
     slotReel.style.transform = 'translateY(0)';
   }
 
-  // Animación: baja hasta el índice exacto del premio elegido
+  // Animación
   function spinTo(index, onEnd){
-    // índice absoluto en el carril: usamos el último set para que “viaje” bastante
     const kTarget = (REPS-1)*prizes.length + index;
-    const targetY = -kTarget * ITEM_H;  // alineación perfecta con la línea central
+    const targetY = -kTarget * ITEM_H;
     const startY  = 0;
-    const duration= 2000 + Math.random()*350;
+    const duration= 1900 + Math.random()*350;
     const start   = performance.now();
 
     function highlight(y){
-      const k = Math.round(-y / ITEM_H); // elemento centrado
+      const k = Math.round(-y / ITEM_H);
       [...slotReel.children].forEach(el => el.removeAttribute('data-active'));
       const el = slotReel.children[k];
       if (el) el.setAttribute('data-active','true');
@@ -121,7 +131,14 @@
     requestAnimationFrame(frame);
   }
 
-  // Mostrar resultado (más “ganaste”)
+  // Selección segura: excluye pesos 0
+  const selectable = prizes.filter(p => p.weight > 0);
+  function pickPrize(){
+    const pool = selectable.flatMap(i => Array(i.weight).fill(i));
+    return pool[rand(pool.length)];
+  }
+
+  // Resultado + Modal (resalta “GANASTE”)
   function showResult(chosen){
     const now = new Date();
     const dateKey  = fmtDate(now);
@@ -129,20 +146,17 @@
     const code     = `CV-${chosen.key}-${dateKey}-${randPart}`;
     const expires  = new Date(now.getTime() + 24*60*60*1000);
 
-    // Tarjeta respaldo
     prizeText.textContent = `Tu premio: ${chosen.label}`;
     codeText.textContent  = code;
-    expiryHint.textContent = `Válido por 24h. Expira: ${fmtDate(expires)} ${fmtTime(expires)}.`;
+    expiryHint.textContent= `Válido 24h. Expira: ${fmtDate(expires)} ${fmtTime(expires)}.`;
     resultCard.hidden = false;
 
-    // Persistencia y bloqueo
     localStorage.setItem(LS_LAST_SPIN, String(Date.now()));
     localStorage.setItem(`cv_code_${dateKey}`, JSON.stringify({code, ts:now.getTime(), exp:expires.getTime()}));
     updateSpinLimit();
 
-    // Modal enfocado en el “GANASTE”
     modalTitle.textContent = '¡GANASTE!';
-    modalPrize.innerHTML   = `<span class="modal__badge">Premio del giro</span><br>${chosen.label}`;
+    modalPrize.textContent = chosen.label;
     modalCode.textContent  = code;
     document.getElementById('modalExpiry').textContent =
       `Toma una captura para canjearlo. Válido por 24h · expira ${fmtDate(expires)} ${fmtTime(expires)}.`;
@@ -157,13 +171,12 @@
       try{ await navigator.clipboard.writeText(code); modalCopy.textContent='Copiado ✓'; setTimeout(()=>modalCopy.textContent='Copiar',1500); }catch{}
     };
 
-    // Confetti solo si es premio real (no TRY)
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
       if (chosen.key !== 'TRY') shootConfetti();
     }
   }
 
-  // Confetti ligero
+  // Confetti
   function shootConfetti(){
     const ctx = confettiCanvas.getContext('2d');
     const {innerWidth:w, innerHeight:h} = window;
@@ -187,13 +200,12 @@
   spinBtn.addEventListener('click', () => {
     if (spinning) return;
 
-    // límite 24h
     const last = Number(localStorage.getItem(LS_LAST_SPIN) || 0);
     if (Date.now() - last < 24*60*60*1000){ updateSpinLimit(); return; }
 
     spinning = true; spinBtn.disabled = true;
     buildReel();
-    const chosen = pickPrize();                   // <-- NUNCA retorna pesos 0
+    const chosen = pickPrize(); // <-- JAMÁS traerá FREE/2x1
     const chosenIndex = prizes.findIndex(p => p.key === chosen.key);
 
     spinTo(chosenIndex, () => {
