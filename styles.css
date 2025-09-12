@@ -157,3 +157,12 @@ body{
 @media (prefers-reduced-motion: reduce){
   *{animation:none!important;transition:none!important}
 }
+/* Footer centrado */
+.site-footer{
+  display:grid;
+  place-items:center;
+  text-align:center;
+  gap:6px;
+  padding:16px 12px calc(16px + env(safe-area-inset-bottom));
+}
+.site-footer p{ margin:4px 0; }

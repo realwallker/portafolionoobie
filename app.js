@@ -1,8 +1,8 @@
-/* Gate por botón (deep-link) + mobile UX + premios bloqueados excluidos */
+/* Cosmic Vapes – CTA 1 pestaña + gating sólido + tragamonedas vertical */
 (() => {
   'use strict';
 
-  // Premios: los de weight 0 SON VISIBLES pero NO sorteables
+  // --- Premios (peso 0: visibles pero NO sorteables) ---
   const prizes = [
     {label:'Siga participando',           key:'TRY',  weight:40, color:'#1f2937'},
     {label:'10% en tu siguiente compra',  key:'P10',  weight:22, color:'#22d3ee'},
@@ -12,19 +12,19 @@
     {label:'VAPE GRATIS',                 key:'FREE', weight:0,  color:'#ef4444'}
   ];
 
-  // UI
-  const followBtn = document.getElementById('followBtn');
-  const gate      = document.querySelector('.gate');
-  const game      = document.getElementById('game');
-  const spinBtn   = document.getElementById('spinBtn');
-  const limitMsg  = document.getElementById('limitMsg');
-  const slotReel  = document.getElementById('slotReel');
+  // --- DOM ---
+  const followBtn  = document.getElementById('followBtn'); // <a href="https://instagram.com/sb.cosmicvapes" target="_blank">
+  const gate       = document.querySelector('.gate');
+  const game       = document.getElementById('game');
+  const spinBtn    = document.getElementById('spinBtn');
+  const limitMsg   = document.getElementById('limitMsg');
+  const slotReel   = document.getElementById('slotReel');
 
-  const resultCard= document.getElementById('resultCard');
-  const prizeText = document.getElementById('prizeText');
-  const codeText  = document.getElementById('codeText');
-  const expiryHint= document.getElementById('expiryHint');
-  const copyBtn   = document.getElementById('copyBtn');
+  const resultCard = document.getElementById('resultCard');
+  const prizeText  = document.getElementById('prizeText');
+  const codeText   = document.getElementById('codeText');
+  const expiryHint = document.getElementById('expiryHint');
+  const copyBtn    = document.getElementById('copyBtn');
 
   // Modal
   const modal      = document.getElementById('prizeModal');
@@ -38,44 +38,52 @@
   // Confetti
   const confettiCanvas = document.getElementById('confetti');
 
+  // --- LocalStorage keys ---
   const LS_LAST_SPIN   = 'cv_lastSpin';
   const LS_FOLLOW_FLAG = 'cv_followIntent';
 
-  // Utils
+  // --- Utils ---
   const fmtDate  = (d) => `${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}`;
   const fmtTime  = (d) => `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   const rand     = (n) => Math.floor(Math.random()*n);
-  const easeOutC = (t)=>1-Math.pow(1-t,3);
+  const easeOutC = (t) => 1 - Math.pow(1 - t, 3);
 
-  // Deep-link a IG + fallback web y flag
-  followBtn?.addEventListener('click', () => {
-    try {
-      localStorage.setItem(LS_FOLLOW_FLAG, String(Date.now()));
-    } catch {}
-    // Intento abrir app
-    window.location.href = 'instagram://user?username=sb.cosmicvapes';
-    // Fallback a web
-    setTimeout(() => {
-      window.open('https://instagram.com/sb.cosmicvapes', '_blank', 'noopener');
-    }, 600);
-  });
+  // --- Helper gating ---
+  const hasFollowIntent = () => !!localStorage.getItem(LS_FOLLOW_FLAG);
 
-  // Al volver/reenfocar, si hubo intento de follow => activar juego
-  function maybeUnlockAfterFollow(){
-    const flag = localStorage.getItem(LS_FOLLOW_FLAG);
-    if (!flag) return;
-    gate.hidden = true;
-    game.hidden = false;
+  function lockGame() {
+    if (gate) gate.hidden = false;
+    if (game) game.hidden = true;
+    if (spinBtn) {
+      spinBtn.disabled = true;
+      spinBtn.setAttribute('aria-disabled', 'true');
+    }
+    if (limitMsg) limitMsg.textContent = 'Sigue la cuenta para activar el giro.';
+  }
+
+  function unlockGame(){
+    if (gate) gate.hidden = true;
+    if (game) game.hidden = false;
+    if (spinBtn) {
+      spinBtn.disabled = false;
+      spinBtn.removeAttribute('aria-disabled');
+    }
     updateSpinLimit();
   }
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) maybeUnlockAfterFollow();
-  });
-  window.addEventListener('pageshow', maybeUnlockAfterFollow);
-  // Por si ya venía activado
-  maybeUnlockAfterFollow();
 
-  // Límite 24h
+  function enforceGateOnLoad(){
+    if (hasFollowIntent()) {
+      unlockGame();
+    } else {
+      lockGame();
+    }
+  }
+
+  function maybeUnlockAfterFollow(){
+    if (hasFollowIntent()) unlockGame();
+  }
+
+  // --- Límite 24h ---
   function updateSpinLimit(){
     const last = Number(localStorage.getItem(LS_LAST_SPIN) || 0);
     const diff = Date.now() - last;
@@ -91,9 +99,22 @@
     }
   }
 
-  // Carrete
-  const ITEM_H = 128;
-  const REPS   = 8;
+  // --- CTA seguir: deja que el <a target="_blank"> abra 1 pestaña y solo marcamos intención ---
+  followBtn?.addEventListener('click', () => {
+    try { localStorage.setItem(LS_FOLLOW_FLAG, String(Date.now())); } catch {}
+    // Activamos el juego en esta pestaña (que queda abierta)
+    unlockGame();
+    // No preventDefault, no window.open: el <a> abre una sola pestaña del perfil
+  });
+
+  // Reactivar si vuelve desde otra pestaña/app
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) maybeUnlockAfterFollow(); });
+  window.addEventListener('pageshow', maybeUnlockAfterFollow);
+
+  // --- Tragamonedas vertical ---
+  const ITEM_H = 128; // Coincide con CSS
+  const REPS   = 8;   // Más repeticiones => scroll más largo
+
   function buildReel(){
     const items = [];
     for (let r=0; r<REPS; r++){
@@ -106,7 +127,6 @@
     slotReel.style.transform = 'translateY(0)';
   }
 
-  // Animación
   function spinTo(index, onEnd){
     const kTarget = (REPS-1)*prizes.length + index;
     const targetY = -kTarget * ITEM_H;
@@ -131,24 +151,24 @@
     requestAnimationFrame(frame);
   }
 
-  // Selección segura: excluye pesos 0
+  // --- Sorteo: excluye pesos 0 ---
   const selectable = prizes.filter(p => p.weight > 0);
   function pickPrize(){
     const pool = selectable.flatMap(i => Array(i.weight).fill(i));
     return pool[rand(pool.length)];
   }
 
-  // Resultado + Modal (resalta “GANASTE”)
+  // --- Resultado + Modal ---
   function showResult(chosen){
-    const now = new Date();
-    const dateKey  = fmtDate(now);
-    const randPart = Math.random().toString(36).slice(2,6).toUpperCase();
-    const code     = `CV-${chosen.key}-${dateKey}-${randPart}`;
-    const expires  = new Date(now.getTime() + 24*60*60*1000);
+    const now     = new Date();
+    const dateKey = fmtDate(now);
+    const randPart= Math.random().toString(36).slice(2,6).toUpperCase();
+    const code    = `CV-${chosen.key}-${dateKey}-${randPart}`;
+    const expires = new Date(now.getTime() + 24*60*60*1000);
 
-    prizeText.textContent = `Tu premio: ${chosen.label}`;
-    codeText.textContent  = code;
-    expiryHint.textContent= `Válido 24h. Expira: ${fmtDate(expires)} ${fmtTime(expires)}.`;
+    prizeText.textContent  = `Tu premio: ${chosen.label}`;
+    codeText.textContent   = code;
+    expiryHint.textContent = `Válido 24h. Expira: ${fmtDate(expires)} ${fmtTime(expires)}.`;
     resultCard.hidden = false;
 
     localStorage.setItem(LS_LAST_SPIN, String(Date.now()));
@@ -163,12 +183,15 @@
     modal.hidden = false;
 
     const close = ()=> modal.hidden = true;
-    modalOk.onclick = close; closeModal.onclick = close;
+    modalOk.onclick = close;
+    closeModal.onclick = close;
     modal.addEventListener('click', (e)=>{ if(e.target===modal) close(); }, {once:true});
     document.addEventListener('keydown', (e)=>{ if(!modal.hidden && e.key==='Escape') close(); }, {once:true});
 
     modalCopy.onclick = async () => {
-      try{ await navigator.clipboard.writeText(code); modalCopy.textContent='Copiado ✓'; setTimeout(()=>modalCopy.textContent='Copiar',1500); }catch{}
+      try{ await navigator.clipboard.writeText(code);
+        modalCopy.textContent='Copiado ✓'; setTimeout(()=>modalCopy.textContent='Copiar',1500);
+      }catch{}
     };
 
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches){
@@ -176,7 +199,7 @@
     }
   }
 
-  // Confetti
+  // --- Confetti ligero ---
   function shootConfetti(){
     const ctx = confettiCanvas.getContext('2d');
     const {innerWidth:w, innerHeight:h} = window;
@@ -190,25 +213,38 @@
     let t = 0;
     (function loop(){
       t++; ctx.clearRect(0,0,w,h);
-      parts.forEach(p=>{ p.y+=p.v; p.x+=Math.sin(p.a+=p.spin)*1.5; ctx.fillStyle=colors[p.s % colors.length]; ctx.fillRect(p.x,p.y,p.s,p.s); });
+      parts.forEach(p=>{
+        p.y+=p.v; p.x+=Math.sin(p.a+=p.spin)*1.5;
+        ctx.fillStyle=colors[p.s % colors.length];
+        ctx.fillRect(p.x,p.y,p.s,p.s);
+      });
       if(t<180) requestAnimationFrame(loop); else ctx.clearRect(0,0,w,h);
     })();
   }
 
-  // Giro
+  // --- Giro (con guard anti-bypass) ---
   let spinning = false;
   spinBtn.addEventListener('click', () => {
+    // 1) Gate estricto: si NO hay followIntent, no se permite girar
+    if (!hasFollowIntent()) {
+      lockGame(); // por si el usuario manipuló el DOM
+      alert('Primero sigue la cuenta y vuelve para activar tu giro.');
+      return;
+    }
+
     if (spinning) return;
 
+    // 2) Límite 24h
     const last = Number(localStorage.getItem(LS_LAST_SPIN) || 0);
     if (Date.now() - last < 24*60*60*1000){ updateSpinLimit(); return; }
 
+    // 3) Animación y sorteo
     spinning = true; spinBtn.disabled = true;
     buildReel();
-    const chosen = pickPrize(); // <-- JAMÁS traerá FREE/2x1
-    const chosenIndex = prizes.findIndex(p => p.key === chosen.key);
+    const chosen = pickPrize();                   // <-- NUNCA será FREE/2x1 con weight=0
+    const idx    = prizes.findIndex(p => p.key === chosen.key);
 
-    spinTo(chosenIndex, () => {
+    spinTo(idx, () => {
       spinning = false;
       spinBtn.disabled = false;
       showResult(chosen);
@@ -216,13 +252,16 @@
   });
 
   copyBtn.addEventListener('click', async () => {
-    try{ await navigator.clipboard.writeText(codeText.textContent);
-      copyBtn.textContent='Copiado ✓'; setTimeout(()=>copyBtn.textContent='Copiar',1600);
+    try{
+      await navigator.clipboard.writeText(codeText.textContent);
+      copyBtn.textContent = 'Copiado ✓';
+      setTimeout(()=> copyBtn.textContent = 'Copiar', 1600);
     }catch{}
   });
 
-  // Init
+  // --- Init ---
   buildReel();
-  updateSpinLimit();
+  enforceGateOnLoad();  // <-- fuerza el gate al cargar (si borran localStorage no pueden girar)
+  // No llamamos updateSpinLimit aquí; lo hace unlockGame cuando corresponda.
 
 })();
